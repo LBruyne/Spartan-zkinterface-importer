@@ -161,7 +161,8 @@ impl<'a> R1csReader<'a> {
         witness_buffer: &'a mut Vec<u8>,
     ) -> Self {
         // Read circuit header, includes inputs
-        let header = fb::get_root_as_root(circuit_header_buffer)
+        let header = fb::root_as_root(circuit_header_buffer)
+            .unwrap()
             .message_as_circuit_header()
             .ok_or(FlatError::new(
                 "Input file is not a flatbuffer Circuit Header",
@@ -169,7 +170,8 @@ impl<'a> R1csReader<'a> {
             .unwrap();
 
         // Read constraint system
-        let cs = fb::get_root_as_root(constraints_buffer)
+        let cs = fb::root_as_root(constraints_buffer)
+            .unwrap()
             .message_as_constraint_system()
             .ok_or(FlatError::new(
                 "Input file is not a flatbuffer Constraint System",
@@ -177,7 +179,8 @@ impl<'a> R1csReader<'a> {
             .unwrap();
 
         // Read witnesses
-        let witness = fb::get_root_as_root(witness_buffer)
+        let witness = fb::root_as_root(witness_buffer)
+            .unwrap()
             .message_as_witness()
             .ok_or(FlatError::new("Input file is not a flatbuffer Witness"))
             .unwrap()
@@ -210,7 +213,7 @@ impl<'a> From<R1csReader<'a>> for R1cs {
 
             for i in 0..num_vars {
                 let mut val = [0; 32];
-                val[..ba_len].clone_from_slice(&values[i * ba_len..(i + 1) * ba_len]);
+                // val[..ba_len].clone_from_slice(&values[i * ba_len..(i + 1) * ba_len]);
                 let v = Variable {
                     id: var_ids.get(i) as usize,
                     value: val,
@@ -222,7 +225,7 @@ impl<'a> From<R1csReader<'a>> for R1cs {
 
         let inputs = get_variables(reader.header.instance_variables().unwrap());
         let mut field_max = [0u8; 32];
-        field_max.clone_from_slice(reader.header.field_maximum().unwrap());
+        // field_max.clone_from_slice(reader.header.field_maximum().unwrap());
 
         let witness = get_variables(reader.witness.assigned_variables().unwrap());
 
@@ -282,8 +285,11 @@ fn run_e2e(circuit: &str, header: &str, witness: &str) {
     let mut B: Vec<(usize, usize, [u8; 32])> = Vec::new();
     let mut C: Vec<(usize, usize, [u8; 32])> = Vec::new();
 
+    eprintln!("generating r1cs...");
     let inst = r1cs.instance(&mut A, &mut B, &mut C);
+    eprintln!("generating inputs assignment...");
     let assignment_inputs = r1cs.inputs_assignment();
+    eprintln!("generating auxiliary assignment...");
     let assignment_vars = r1cs.vars_assignment();
 
     // Check if instance is satisfiable

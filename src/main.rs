@@ -44,10 +44,9 @@ fn main() {
     let mut bufw = Vec::new();
     fw.read_to_end(&mut bufw).unwrap();
 
-
     // Initialize R1csReader
     let reader = R1csReader::new(&mut bufh, &mut bufcs, &mut bufw);
-    let r1cs = R1cs::from(reader);
+    let r1cs: R1cs = R1cs::from(reader);
 
     // We will encode the above constraints into three matrices, where
     // the coefficients in the matrix are in the little-endian byte order
@@ -55,8 +54,11 @@ fn main() {
     let mut B: Vec<(usize, usize, [u8; 32])> = Vec::new();
     let mut C: Vec<(usize, usize, [u8; 32])> = Vec::new();
 
+    eprintln!("generating r1cs...");
     let inst = r1cs.instance(&mut A, &mut B, &mut C);
+    eprintln!("generating inputs assignment...");
     let assignment_inputs = r1cs.inputs_assignment();
+    eprintln!("generating auxiliary assignment...");
     let assignment_vars = r1cs.vars_assignment();
 
     // Check if instance is satisfiable
@@ -71,10 +73,8 @@ fn main() {
         Err(e) => std::panic!(e)
     }
 
-    // Start timer for prover
-    let prover = Instant::now();
-
     if nizk {
+        let prover = Instant::now();
         let gens = r1cs.nizk_public_params();
 
         // produce a proof of satisfiability
@@ -93,7 +93,7 @@ fn main() {
             "prove" => {
                 let json = serde_json::to_string_pretty(&proof).unwrap();
                 eprintln!("Prover: {}ms", prover.elapsed().as_millis());
-                println!("{}", json)
+                // println!("{}", json)
             },
             "verify" => {
                 let mut verifier_transcript = Transcript::new(b"nizk_example");
@@ -106,7 +106,7 @@ fn main() {
             _ => eprintln!("{}", usage),
         }
     } else {
-
+        let prover = Instant::now();
         let gens = r1cs.snark_public_params();
         // create a commitment to the R1CS instance
         let (comm, decomm) = SNARK::encode(&inst, &gens);

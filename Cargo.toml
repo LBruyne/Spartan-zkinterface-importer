@@ -16,14 +16,14 @@ path = "src/main.rs"
 
 [dependencies]
 im = "15.0.0"
-spartan = { git = "https://github.com/microsoft/Spartan.git", branch = "multicore" }
-curve25519-dalek = {version = "3.0.0", features = ["serde", "simd_backend"]}
+spartan = { path = "../spartan-multicore" }
+curve25519-dalek = {version = "3.2.1", features = ["serde", "simd_backend"]}
 rand = "0.7.3"
 merlin = "3.0.0"
 rand_core = { version = "0.5", default-features = false }
 zeroize = { version = "1", default-features = false }
 generic-array = "0.14.4"
-flatbuffers = "0.7.0"
+flatbuffers = "23.1.21"
 serde = { version = "1.0.124", features = ["derive"] }
 serde_json = "1.0.59"
-
+packed_simd_2 = "0.3.8"
