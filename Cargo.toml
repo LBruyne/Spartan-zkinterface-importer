@@ -16,7 +16,7 @@ path = "src/main.rs"
 
 [dependencies]
 im = "15.0.0"
-spartan = { path = "../spartan-multicore" }
+spartan = { git = "https://github.com/LBruyne/Spartan.git", branch = "multicore" }
 curve25519-dalek = {version = "3.2.1", features = ["serde", "simd_backend"]}
 rand = "0.7.3"
 merlin = "3.0.0"

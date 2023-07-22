@@ -55,11 +55,11 @@ fn main() {
     let mut C: Vec<(usize, usize, [u8; 32])> = Vec::new();
 
     eprintln!("generating r1cs...");
-    let inst = r1cs.instance(&mut A, &mut B, &mut C);
+    let inst: libspartan::Instance = r1cs.instance(&mut A, &mut B, &mut C);
     eprintln!("generating inputs assignment...");
-    let assignment_inputs = r1cs.inputs_assignment();
+    let assignment_inputs: libspartan::Assignment = r1cs.inputs_assignment();
     eprintln!("generating auxiliary assignment...");
-    let assignment_vars = r1cs.vars_assignment();
+    let assignment_vars: libspartan::Assignment = r1cs.vars_assignment();
 
     // Check if instance is satisfiable
     let res = inst.is_sat(&assignment_vars, &assignment_inputs);
@@ -78,7 +78,7 @@ fn main() {
         let gens = r1cs.nizk_public_params();
 
         // produce a proof of satisfiability
-        let mut prover_transcript = Transcript::new(b"nizk_example");
+        let mut prover_transcript: Transcript = Transcript::new(b"nizk_example");
         let proof = NIZK::prove(
             &inst,
             assignment_vars,

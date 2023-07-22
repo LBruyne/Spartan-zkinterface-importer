@@ -2,7 +2,7 @@
 pub extern crate flatbuffers;
 
 pub mod zkinterface_generated;
-use libspartan::{InputsAssignment, Instance, SNARKGens, VarsAssignment, SNARK, NIZKGens, NIZK};
+use libspartan::{InputsAssignment, Instance, NIZKGens, SNARKGens, VarsAssignment, NIZK, SNARK};
 use merlin::Transcript;
 use std::cmp::max;
 use std::fmt;
@@ -99,8 +99,8 @@ impl R1cs {
             Some(idx) => return idx,
             None => match self.inputs.iter().position(|v| v.id == *id) {
                 Some(idx) => return idx + num_vars + 1,
-                None => return num_vars
-            }
+                None => return num_vars,
+            },
         }
     }
 
@@ -124,7 +124,9 @@ impl R1cs {
                 C.push((i, self.translate(id), value.clone()));
             }
             i += 1;
+            // eprintln!("{}", i);
         }
+
         Instance::new(
             self.constraints.len(),
             self.witness.len(),
@@ -149,7 +151,7 @@ impl R1cs {
         NIZKGens::new(
             self.constraints.len(),
             self.witness.len(),
-            self.inputs.len()
+            self.inputs.len(),
         )
     }
 }
@@ -160,36 +162,35 @@ impl<'a> R1csReader<'a> {
         constraints_buffer: &'a mut Vec<u8>,
         witness_buffer: &'a mut Vec<u8>,
     ) -> Self {
-        // Read circuit header, includes inputs
-        let header = fb::root_as_root(circuit_header_buffer)
-            .unwrap()
-            .message_as_circuit_header()
-            .ok_or(FlatError::new(
-                "Input file is not a flatbuffer Circuit Header",
-            ))
-            .unwrap();
+        unsafe {
+            // Read circuit header, includes inputs
+            let header = fb::root_as_root_unchecked(circuit_header_buffer)
+                .message_as_circuit_header()
+                .ok_or(FlatError::new(
+                    "Input file is not a flatbuffer Circuit Header",
+                ))
+                .unwrap();
 
-        // Read constraint system
-        let cs = fb::root_as_root(constraints_buffer)
-            .unwrap()
-            .message_as_constraint_system()
-            .ok_or(FlatError::new(
-                "Input file is not a flatbuffer Constraint System",
-            ))
-            .unwrap();
+            // Read constraint system
+            let cs = fb::root_as_root_unchecked(constraints_buffer)
+                .message_as_constraint_system()
+                .ok_or(FlatError::new(
+                    "Input file is not a flatbuffer Constraint System",
+                ))
+                .unwrap();
 
-        // Read witnesses
-        let witness = fb::root_as_root(witness_buffer)
-            .unwrap()
-            .message_as_witness()
-            .ok_or(FlatError::new("Input file is not a flatbuffer Witness"))
-            .unwrap()
-            .clone();
+            // Read witnesses
+            let witness = fb::root_as_root_unchecked(witness_buffer)
+                .message_as_witness()
+                .ok_or(FlatError::new("Input file is not a flatbuffer Witness"))
+                .unwrap()
+                .clone();
 
-        R1csReader {
-            header,
-            cs,
-            witness,
+            R1csReader {
+                header,
+                cs,
+                witness,
+            }
         }
     }
 }
@@ -244,9 +245,18 @@ impl<'a> From<R1csReader<'a>> for R1cs {
             let b = get_variables(ctr.linear_combination_b().unwrap());
             let c = get_variables(ctr.linear_combination_c().unwrap());
 
-            num_non_zero_a += a.iter().filter(|&v| v.value.iter().any(|&x| x != 0)).count();
-            num_non_zero_b += b.iter().filter(|&v| v.value.iter().any(|&x| x != 0)).count();
-            num_non_zero_c += c.iter().filter(|&v| v.value.iter().any(|&x| x != 0)).count();
+            num_non_zero_a += a
+                .iter()
+                .filter(|&v| v.value.iter().any(|&x| x != 0))
+                .count();
+            num_non_zero_b += b
+                .iter()
+                .filter(|&v| v.value.iter().any(|&x| x != 0))
+                .count();
+            num_non_zero_c += c
+                .iter()
+                .filter(|&v| v.value.iter().any(|&x| x != 0))
+                .count();
             constraints.push(QEQ { a, b, c });
         }
 
@@ -257,7 +267,7 @@ impl<'a> From<R1csReader<'a>> for R1cs {
             witness,
             field_max,
             constraints,
-            non_zero_entries
+            non_zero_entries,
         }
     }
 }
@@ -325,7 +335,6 @@ fn run_e2e(circuit: &str, header: &str, witness: &str) {
 fn test_e2e_foo() {
     run_e2e("test/foo.zkif", "test/foo.inp.zkif", "test/foo.wit.zkif");
 }
-
 
 #[test]
 fn test_e2e_add() {

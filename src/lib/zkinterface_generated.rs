@@ -1158,7 +1158,6 @@ impl<'a> Root<'a> {
   #[allow(non_snake_case)]
   pub fn message_as_circuit_header(&self) -> Option<CircuitHeader<'a>> {
     if self.message_type() == Message::CircuitHeader {
-      eprintln!("{:?}", self.message_type());
       self.message().map(|t| {
        // Safety:
        // Created from a valid Table for this object
@@ -1166,7 +1165,6 @@ impl<'a> Root<'a> {
        unsafe { CircuitHeader::init_from_table(t) }
      })
     } else {
-      eprintln!("{:?}", self.message_type());
       None
     }
   }

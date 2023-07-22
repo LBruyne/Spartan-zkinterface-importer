@@ -1,7 +1,7 @@
-zkinterface-Spartan
+Spartan-zkinterface-importer
 ---------------------
 
-This repository implements a Spartan ZKP backend for uniform zkinterface file.
+This repository implements an importer for uniform zkinterface file under a Spartan SNARK backend.
 
 You can export R1CS file into .zkif format from any R1CS based ZKP system, and import these .zkif interfaces into this Spartan backend, for better prover efficiency.
 
@@ -9,7 +9,12 @@ This repository uses FlatBuffer as the binary interface protocol. And we use a 2
 
 # Usage
 
-```
+Put the .zkif files under the test folder, then run the following command.
+
+``` shell
 cargo +nightly run -- prove --nizk constraints.zkif header.zkif witness.zkif
 cargo +nightly run -- verify --nizk constraints.zkif header.zkif witness.zkif
+# e.g cargo +nightly run -- prove --nizk ./test/MV/MV.constraints.zkif ./test/MV/MV.header.zkif ./test/MV/MV.witness.zkif
 ```
+
+The process of importing constraints into the Spartan system may take a little long time. Please wait for it.
