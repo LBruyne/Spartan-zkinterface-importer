@@ -13,8 +13,8 @@ Cargo.lock
 
 .vscode
 .git
+*/ZC/ZC.constraints.zkif
+*/ZC/ZC.header.zkif
+*/ZC/ZC.witness.zkif
 Cargo.lock
-test/ZC/ZC.constraints.zkif
-test/ZC/ZC.header.zkif
-test/ZC/ZC.witness.zkif
 
