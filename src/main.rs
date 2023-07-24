@@ -16,12 +16,12 @@ fn main() {
     let args: Vec<String> = env::args().collect();
     let nizk: bool;
     let usage = format!(
-        "{} [prove | verify] [--nizk|--snark] <circuit.zkif> <inputs.zkif> <witness.zkif>",
+        "{} [--nizk|--snark] <circuit.zkif> <inputs.zkif> <witness.zkif>",
         args.get(0).unwrap()
     );
 
     // NIZK mode
-    match args.get(2) {
+    match args.get(1) {
         Some(v) if v.clone() == String::from("--nizk") => nizk = true,
         Some(v) if v.clone() == String::from("--snark") => nizk = false,
         _ => {
@@ -30,9 +30,10 @@ fn main() {
         }
     }
 
-    let circuitfn = args.get(3).unwrap();
-    let inputsfn = args.get(4).unwrap();
-    let witnessfn = args.get(5).unwrap();
+    let circuitfn = args.get(2).unwrap();
+    let inputsfn = args.get(3).unwrap();
+    let witnessfn = args.get(4).unwrap();
+    eprintln!("Circuit: {}", circuitfn);
 
     let mut fh = File::open(inputsfn).unwrap();
     let mut bufh = Vec::new();
@@ -54,11 +55,11 @@ fn main() {
     let mut B: Vec<(usize, usize, [u8; 32])> = Vec::new();
     let mut C: Vec<(usize, usize, [u8; 32])> = Vec::new();
 
-    eprintln!("generating r1cs...");
+    eprintln!("Generating r1cs instance...");
     let inst: libspartan::Instance = r1cs.instance(&mut A, &mut B, &mut C);
-    eprintln!("generating inputs assignment...");
+    eprintln!("Generating inputs assignment...");
     let assignment_inputs: libspartan::Assignment = r1cs.inputs_assignment();
-    eprintln!("generating auxiliary assignment...");
+    eprintln!("Generating auxiliary assignment...");
     let assignment_vars: libspartan::Assignment = r1cs.vars_assignment();
 
     // Check if instance is satisfiable
@@ -86,25 +87,17 @@ fn main() {
             &gens,
             &mut prover_transcript,
         );
-        eprintln!("Circuit: {}", circuitfn);
         eprintln!("Prover: {}ms", prover.elapsed().as_millis());
+
+        let json = serde_json::to_string_pretty(&proof).unwrap();
+        eprintln!("Proof size: {}", json.len());
+
         let verifier = Instant::now();
-        match args.get(1).unwrap().as_str() {
-            "prove" => {
-                let json = serde_json::to_string_pretty(&proof).unwrap();
-                eprintln!("Prover: {}ms", prover.elapsed().as_millis());
-                // println!("{}", json)
-            },
-            "verify" => {
-                let mut verifier_transcript = Transcript::new(b"nizk_example");
-                assert!(proof
-                    .verify(&inst, &assignment_inputs, &mut verifier_transcript, &gens)
-                    .is_ok());
-                eprintln!("Verifier: {}ms", verifier.elapsed().as_millis());
-                eprintln!("NIZK proof verification successful");
-            }
-            _ => eprintln!("{}", usage),
-        }
+        let mut verifier_transcript = Transcript::new(b"nizk_example");
+        assert!(proof.verify(&inst, &assignment_inputs, &mut verifier_transcript, &gens)
+                     .is_ok());
+        eprintln!("Verifier: {}ms", verifier.elapsed().as_millis());
+        eprintln!("NIZK proof verification successful");
     } else {
         let prover = Instant::now();
         let gens = r1cs.snark_public_params();
@@ -121,24 +114,17 @@ fn main() {
             &gens,
             &mut prover_transcript,
         );
-        eprintln!("Circuit: {}", circuitfn);
         eprintln!("Prover: {}ms", prover.elapsed().as_millis());
+
+        let json = serde_json::to_string_pretty(&proof).unwrap();
+        eprintln!("Proof size: {}", json.len());
+
         let verifier = Instant::now();
-        match args.get(1).unwrap().as_str() {
-            "prove" => {
-                let json = serde_json::to_string_pretty(&proof).unwrap();
-                eprintln!("Prover: {}ms", prover.elapsed().as_millis());
-                println!("{}", json)
-            },
-            "verify" => {
-                let mut verifier_transcript = Transcript::new(b"snark_example");
-                assert!(proof
-                    .verify(&comm, &assignment_inputs, &mut verifier_transcript, &gens)
-                    .is_ok());
-                eprintln!("Verifier: {}ms", verifier.elapsed().as_millis());
-                eprintln!("SNARK proof verification successful");
-            }
-            _ => eprintln!("{}", usage),
-        }
+        let mut verifier_transcript = Transcript::new(b"snark_example");
+        assert!(proof
+            .verify(&comm, &assignment_inputs, &mut verifier_transcript, &gens)
+            .is_ok());
+        eprintln!("Verifier: {}ms", verifier.elapsed().as_millis());
+        eprintln!("SNARK proof verification successful");
     }
 }

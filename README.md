@@ -12,9 +12,9 @@ This repository uses FlatBuffer as the binary interface protocol. And we use a 2
 Put the .zkif files under the test folder, then run the following command.
 
 ``` shell
-cargo +nightly run -- prove --nizk constraints.zkif header.zkif witness.zkif
-cargo +nightly run -- verify --nizk constraints.zkif header.zkif witness.zkif
-# e.g cargo +nightly run -- prove --nizk ./test/MV/MV.constraints.zkif ./test/MV/MV.header.zkif ./test/MV/MV.witness.zkif
+cargo +nightly run -- --nizk constraints.zkif header.zkif witness.zkif
+cargo +nightly run -- --nizk constraints.zkif header.zkif witness.zkif
+# e.g. cargo +nightly run -- --nizk ./test/MV/MV.constraints.zkif ./test/MV/MV.header.zkif ./test/MV/MV.witness.zkif
 ```
 
 The process of importing constraints into the Spartan system may take a little long time. Please wait for it.
